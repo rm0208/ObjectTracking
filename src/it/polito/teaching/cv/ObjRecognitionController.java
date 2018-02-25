@@ -261,8 +261,11 @@ public class ObjRecognitionController
 				double cX = m.m10 / m.m00;
 				double cY = m.m01 / m.m00;
 				
+				Sender sendData = new Sender();
+				sendData.send(cX, cY);
+
 				//System.out.println(frame.width());
-				System.out.println("X: " + cX + "    Y: " + cY);
+				//System.out.println("X: " + cX + "    Y: " + cY);
 				Imgproc.drawContours(frame, contours, idx, new Scalar(255,0,0), 5);
 			
 			}
