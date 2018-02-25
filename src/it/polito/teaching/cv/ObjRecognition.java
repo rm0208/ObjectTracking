@@ -10,6 +10,8 @@ import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
 import javafx.fxml.FXMLLoader;
 
+import it.polito.teaching.cv.*;
+
 public class ObjRecognition extends Application
 {
 	/**
@@ -37,7 +39,7 @@ public class ObjRecognition extends Application
 			// set a whitesmoke background
 			root.setStyle("-fx-background-color: whitesmoke;");
 			// create and style a scene
-			Scene scene = new Scene(root, 800, 600);
+			Scene scene = new Scene(root, 1000, 600);
 			scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
 			// create the stage with the given title and the previously created
 			// scene
@@ -65,7 +67,6 @@ public class ObjRecognition extends Application
 	{
 		// load the native OpenCV library
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-		
 		launch(args);
 	}
 }

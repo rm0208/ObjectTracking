@@ -9,9 +9,12 @@ import java.util.concurrent.TimeUnit;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.imgproc.Moments;
 import org.opencv.videoio.VideoCapture;
 
 import it.polito.elite.teaching.cv.utils.Utils;
@@ -88,15 +91,15 @@ public class ObjRecognitionController
 		this.hsvCurrentValues.textProperty().bind(hsvValuesProp);
 				
 		// set a fixed width for all the image to show and preserve image ratio
-		this.imageViewProperties(this.originalFrame, 400);
-		this.imageViewProperties(this.maskImage, 200);
-		this.imageViewProperties(this.morphImage, 200);
+		this.imageViewProperties(this.originalFrame, 500);
+		this.imageViewProperties(this.maskImage, 400);
+		this.imageViewProperties(this.morphImage, 400);
 		
 		if (!this.cameraActive)
 		{
-			// start the video capture
-			this.capture.open(0);
 			
+			this.capture.open(0);
+
 			// is the video stream available?
 			if (this.capture.isOpened())
 			{
@@ -114,6 +117,8 @@ public class ObjRecognitionController
 						Image imageToShow = Utils.mat2Image(frame);
 						updateImageView(originalFrame, imageToShow);
 					}
+					
+					
 				};
 				
 				this.timer = Executors.newSingleThreadScheduledExecutor();
@@ -167,23 +172,23 @@ public class ObjRecognitionController
 					Mat morphOutput = new Mat();
 					
 					// remove some noise
-					Imgproc.blur(frame, blurredImage, new Size(7, 7));
+					Imgproc.blur(frame, blurredImage, new Size(25, 25));
 					
 					// convert the frame to HSV
 					Imgproc.cvtColor(blurredImage, hsvImage, Imgproc.COLOR_BGR2HSV);
+
+//					this.updateImageView(this.maskImage, Utils.mat2Image(hsvImage));
 					
 					// get thresholding values from the UI
 					// remember: H ranges 0-180, S and V range 0-255
-					Scalar minValues = new Scalar(this.hueStart.getValue(), this.saturationStart.getValue(),
-							this.valueStart.getValue());
-					Scalar maxValues = new Scalar(this.hueStop.getValue(), this.saturationStop.getValue(),
-							this.valueStop.getValue());
+					Scalar minValues = new Scalar(this.hueStart.getValue(), this.saturationStart.getValue(), this.valueStart.getValue());
+					Scalar maxValues = new Scalar(this.hueStop.getValue(), this.saturationStop.getValue(), this.valueStop.getValue());
 					
 					// show the current selected HSV range
-					String valuesToPrint = "Hue range: " + minValues.val[0] + "-" + maxValues.val[0]
-							+ "\tSaturation range: " + minValues.val[1] + "-" + maxValues.val[1] + "\tValue range: "
-							+ minValues.val[2] + "-" + maxValues.val[2];
-					Utils.onFXThread(this.hsvValuesProp, valuesToPrint);
+//					String valuesToPrint = "Hue range: " + minValues.val[0] + "-" + maxValues.val[0]
+//							+ "\tSaturation range: " + minValues.val[1] + "-" + maxValues.val[1] + "\tValue range: "
+//							+ minValues.val[2] + "-" + maxValues.val[2];
+//					Utils.onFXThread(this.hsvValuesProp, valuesToPrint);
 					
 					// threshold HSV image to select tennis balls
 					Core.inRange(hsvImage, minValues, maxValues, mask);
@@ -200,6 +205,7 @@ public class ObjRecognitionController
 					
 					Imgproc.dilate(morphOutput, morphOutput, dilateElement);
 					Imgproc.dilate(morphOutput, morphOutput, dilateElement);
+					
 					
 					// show the partial output
 					this.updateImageView(this.morphImage, Utils.mat2Image(morphOutput));
@@ -234,21 +240,34 @@ public class ObjRecognitionController
 	 */
 	private Mat findAndDrawBalls(Mat maskedImage, Mat frame)
 	{
+	
 		// init
 		List<MatOfPoint> contours = new ArrayList<>();
+		List<MatOfPoint> result = new ArrayList<>();
 		Mat hierarchy = new Mat();
 		
 		// find contours
-		Imgproc.findContours(maskedImage, contours, hierarchy, Imgproc.RETR_CCOMP, Imgproc.CHAIN_APPROX_SIMPLE);
+		Imgproc.findContours(maskedImage, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);		
 		
-		// if any contour exist...
+		// if any contour exist...		
 		if (hierarchy.size().height > 0 && hierarchy.size().width > 0)
 		{
+			
 			// for each contour, display it in blue
 			for (int idx = 0; idx >= 0; idx = (int) hierarchy.get(0, idx)[0])
 			{
-				Imgproc.drawContours(frame, contours, idx, new Scalar(250, 0, 0));
+				Moments m = Imgproc.moments(contours.get(idx));
+				
+				double cX = m.m10 / m.m00;
+				double cY = m.m01 / m.m00;
+				
+				//System.out.println(frame.width());
+				System.out.println("X: " + cX + "    Y: " + cY);
+				Imgproc.drawContours(frame, contours, idx, new Scalar(255,0,0), 5);
+			
 			}
+			
+			
 		}
 		
 		return frame;
